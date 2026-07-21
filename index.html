@@ -26,6 +26,7 @@
   a{color:inherit;}
   @media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
 
+  /* ---------- boot sequence ---------- */
   #boot{
     position:fixed; inset:0; z-index:9999; background:#08090c;
     display:flex; align-items:center; justify-content:center;
@@ -39,10 +40,12 @@
   #boot-cursor{ display:inline-block; width:8px; height:14px; background:#8fd7a3; margin-left:4px; animation:blink 1s step-end infinite; vertical-align:middle;}
   @keyframes blink{ 50%{opacity:0;} }
 
+  /* ---------- cinematic intro screens ---------- */
   html.screens-active{ scroll-snap-type: y proximity; }
   .screen{
     position:relative; min-height:100svh; display:flex; align-items:center; justify-content:center;
     scroll-snap-align:start; overflow:hidden; text-align:center;
+    width:100vw; margin-left:calc(50% - 50vw);
   }
   .screen-bg{ position:absolute; inset:0; z-index:0; }
   .screen-content{
@@ -54,6 +57,7 @@
   .screen h2.screen-title{ font-size:clamp(38px,7vw,72px); line-height:1; }
   .screen p.screen-sub{ max-width:520px; margin:20px auto 0; color:var(--concrete-dim); font-size:16px; }
 
+  /* dots nav */
   #screenDots{ position:fixed; right:24px; top:50%; transform:translateY(-50%); z-index:400; display:flex; flex-direction:column; gap:12px; }
   #screenDots span{ width:7px; height:7px; border-radius:50%; background:var(--line); transition:background .3s, transform .3s; display:block; }
   #screenDots span.on{ background:var(--grip); transform:scale(1.5); }
@@ -66,12 +70,19 @@
   }
   .enter-btn:hover{ background:var(--grip); color:#0d0f13; }
 
+  /* ---------- full-bleed photo screens ---------- */
   .photo-screen{ color:#f3f1ea; }
+  .photo-screen .iris{
+    position:absolute; inset:0; z-index:1; display:flex; align-items:center; justify-content:center; text-align:center;
+    clip-path: circle(0% at 50% 50%);
+    transition: clip-path 1.6s cubic-bezier(.65,0,.35,1);
+  }
+  .photo-screen.active .iris{ clip-path: circle(140% at 50% 50%); }
   .photo-screen .screen-bg{ background:#08090c; }
   .photo-screen .bg-img{
     position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-    transform:scale(1.15); opacity:0; filter:brightness(.55) saturate(1.05);
-    transition:transform 3.6s cubic-bezier(.16,1,.3,1), opacity 1.4s ease;
+    transform:scale(1.35); opacity:0; filter:brightness(.55) saturate(1.05);
+    transition:transform 4.2s cubic-bezier(.16,1,.3,1), opacity 1.2s ease;
   }
   .photo-screen.active .bg-img{ transform:scale(1.0); opacity:1; }
   .photo-screen .scrim{
@@ -85,6 +96,7 @@
   }
   @media (max-width:720px){ .photo-credit{ display:none; } }
 
+  /* ---------- HUD ---------- */
   #hud{
     position:fixed; top:20px; right:20px; z-index:500;
     font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--concrete-dim);
@@ -105,6 +117,7 @@
       radial-gradient(circle at 80% 60%, rgba(255,90,54,0.05), transparent 45%);
   }
 
+  /* ---------- road w/ parallax + trail ---------- */
   .road-wrap{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:130px; height:100%; z-index:1; pointer-events:none; }
   .road-wrap svg{ width:100%; height:100%; display:block; }
   #roadGlow{ fill:none; stroke:var(--grip); stroke-width:90; opacity:0.03; filter:blur(20px); }
@@ -116,6 +129,7 @@
   #boardMarker{ font-size:28px; filter:drop-shadow(0 0 10px rgba(255,90,54,.7)); will-change:transform; }
   @media (max-width:720px){ .road-wrap{width:70px;} #roadPath,#roadEdgeL,#roadEdgeR{stroke-width:40px;} }
 
+  /* ---------- shell ---------- */
   .container{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:0 32px; }
   section{ position:relative; padding:150px 0; }
   @media (max-width:720px){ section{padding:100px 0;} }
@@ -156,6 +170,7 @@
   .honor .n{ font-family:'JetBrains Mono'; font-size:11px; color:var(--lane); }
   .honor .t{ font-size:14px; margin-top:6px; }
 
+  /* ---------- hero ---------- */
   .hero{ min-height:100svh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding-top:60px; }
   .hero .kicker{ font-family:'JetBrains Mono'; font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--concrete-dim); margin-bottom:20px; opacity:0; animation:fadeUp .8s .1s forwards; }
   .hero h1{ font-size:clamp(40px,8vw,84px); font-weight:700; line-height:1.02; opacity:0; animation:fadeUp .9s .25s forwards; }
@@ -166,6 +181,7 @@
   .scroll-cue .wheel{ width:1px; height:36px; background:linear-gradient(var(--grip),transparent); animation:pulse 1.8s ease-in-out infinite; }
   @keyframes pulse{ 0%,100%{opacity:.3;} 50%{opacity:1;} }
 
+  /* ---------- IDE / code editor block ---------- */
   .ide{
     background:#0b0d11; border:1px solid var(--line); border-radius:12px; overflow:hidden;
     margin-top:24px; box-shadow:0 30px 60px -30px rgba(0,0,0,.7);
@@ -185,6 +201,7 @@
   .ide-status{ display:flex; justify-content:space-between; padding:8px 16px; border-top:1px solid var(--line); font-family:'JetBrains Mono'; font-size:11px; color:var(--concrete-dim); }
   .ide-status .live-dot{ width:6px; height:6px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:6px; box-shadow:0 0 8px var(--teal); }
 
+  /* ---------- footer ---------- */
   footer{ padding:110px 0 60px; text-align:center; border-top:1px solid var(--line); }
   footer h2{ font-size:32px; margin-bottom:16px; }
   .footer-links{ margin-top:26px; display:flex; gap:26px; justify-content:center; flex-wrap:wrap; }
@@ -250,58 +267,66 @@
 
   <!-- SCREEN 1: ROBOT -->
   <section class="screen photo-screen" id="robotScreen">
-    <div class="screen-bg">
-      <img class="bg-img" src="assets/A_software_developer_desk_in_a_dark_room_single_bright_glowi.jpg" alt="">
-      <div class="scrim"></div>
-    </div>
-    <div class="screen-content">
-      <div class="tag-line">Chapter 01 · Machines</div>
-      <h2 class="screen-title">It starts with<br>how things think.</h2>
-      <p class="screen-sub">Sensors, feedback loops, systems that respond to the world — the same logic behind an Arduino-powered walking stick I built for someone who couldn't see the road ahead.</p>
+    <div class="iris">
+      <div class="screen-bg">
+        <img class="bg-img" src="assets/A_software_developer_desk_in_a_dark_room_single_bright_glowi.jpg" alt="">
+        <div class="scrim"></div>
+      </div>
+      <div class="screen-content">
+        <div class="tag-line">Chapter 01 · Machines</div>
+        <h2 class="screen-title">It starts with<br>how things think.</h2>
+        <p class="screen-sub">Sensors, feedback loops, systems that respond to the world — the same logic behind an Arduino-powered walking stick I built for someone who couldn't see the road ahead.</p>
+      </div>
     </div>
   </section>
 
   <!-- SCREEN 2: BOOK -->
   <section class="screen photo-screen" id="bookScreen">
-    <div class="screen-bg">
-      <img class="bg-img" src="https://images.unsplash.com/photo-1585896452649-6ede5e126800?fm=jpg&q=80&w=2400&auto=format&fit=crop" alt="">
-      <div class="scrim"></div>
+    <div class="iris">
+      <div class="screen-bg">
+        <img class="bg-img" src="https://images.unsplash.com/photo-1585896452649-6ede5e126800?fm=jpg&q=80&w=2400&auto=format&fit=crop" alt="">
+        <div class="scrim"></div>
+      </div>
+      <div class="screen-content">
+        <div class="tag-line">Chapter 02 · Study</div>
+        <h2 class="screen-title">Then it becomes<br>hours with a textbook.</h2>
+        <p class="screen-sub">Math AA, Physics, Computer Science HL — the structured branch. The self-taught courses on the side are where the real depth got built.</p>
+      </div>
+      <div class="photo-credit">Markus Spiske / Unsplash</div>
     </div>
-    <div class="screen-content">
-      <div class="tag-line">Chapter 02 · Study</div>
-      <h2 class="screen-title">Then it becomes<br>hours with a textbook.</h2>
-      <p class="screen-sub">Math AA, Physics, Computer Science HL — the structured branch. The self-taught courses on the side are where the real depth got built.</p>
-    </div>
-    <div class="photo-credit">Markus Spiske / Unsplash</div>
   </section>
 
   <!-- SCREEN 3: CODE -->
   <section class="screen photo-screen" id="codeScreen">
-    <div class="screen-bg">
-      <img class="bg-img" src="https://images.unsplash.com/photo-1759661881353-5b9cc55e1cf4?fm=jpg&q=80&w=2400&auto=format&fit=crop" alt="">
-      <div class="scrim"></div>
+    <div class="iris">
+      <div class="screen-bg">
+        <img class="bg-img" src="https://images.unsplash.com/photo-1759661881353-5b9cc55e1cf4?fm=jpg&q=80&w=2400&auto=format&fit=crop" alt="">
+        <div class="scrim"></div>
+      </div>
+      <div class="screen-content">
+        <div class="tag-line">Chapter 03 · Build</div>
+        <h2 class="screen-title">Then it's just you<br>and a blinking cursor.</h2>
+        <p class="screen-sub">Every project below started as an empty file. AlumnX, VeriBuy, RebootAE — none of them existed until they were typed into being, line by line.</p>
+      </div>
+      <div class="photo-credit">Jakub Żerdzicki / Unsplash</div>
     </div>
-    <div class="screen-content">
-      <div class="tag-line">Chapter 03 · Build</div>
-      <h2 class="screen-title">Then it's just you<br>and a blinking cursor.</h2>
-      <p class="screen-sub">Every project below started as an empty file. AlumnX, VeriBuy, RebootAE — none of them existed until they were typed into being, line by line.</p>
-    </div>
-    <div class="photo-credit">Jakub Żerdzicki / Unsplash</div>
   </section>
 
   <!-- SCREEN 4: INTERFACE -->
   <section class="screen photo-screen" id="interfaceScreen">
-    <div class="screen-bg">
-      <img class="bg-img" src="https://images.unsplash.com/photo-1754548930550-be9fa88874f4?fm=jpg&q=80&w=2400&auto=format&fit=crop" alt="">
-      <div class="scrim"></div>
+    <div class="iris">
+      <div class="screen-bg">
+        <img class="bg-img" src="https://images.unsplash.com/photo-1754548930550-be9fa88874f4?fm=jpg&q=80&w=2400&auto=format&fit=crop" alt="">
+        <div class="scrim"></div>
+      </div>
+      <div class="screen-content">
+        <div class="tag-line">Chapter 04 · Ship</div>
+        <h2 class="screen-title">Then it's live —<br>and someone's using it.</h2>
+        <p class="screen-sub">That's the part that never gets old: watching something you built stop being a file on your laptop and start being a tool in someone else's hands.</p>
+        <a href="#alumnxScreen" class="enter-btn">see what I've shipped ↓</a>
+      </div>
+      <div class="photo-credit">Jakub Żerdzicki / Unsplash</div>
     </div>
-    <div class="screen-content">
-      <div class="tag-line">Chapter 04 · Ship</div>
-      <h2 class="screen-title">Then it's live —<br>and someone's using it.</h2>
-      <p class="screen-sub">That's the part that never gets old: watching something you built stop being a file on your laptop and start being a tool in someone else's hands.</p>
-      <a href="#alumnxScreen" class="enter-btn">see what I've shipped ↓</a>
-    </div>
-    <div class="photo-credit">Jakub Żerdzicki / Unsplash</div>
   </section>
 
   <!-- ALUMNX FLAGSHIP -->
@@ -486,6 +511,7 @@
 </div>
 
 <script>
+  // ---------- boot sequence ----------
   const bootLines = document.querySelectorAll('#boot-lines div');
   bootLines.forEach((l,i)=> setTimeout(()=> l.classList.add('show'), 300 + i*380));
   setTimeout(()=>{
@@ -493,6 +519,7 @@
     document.getElementById('hud').classList.add('show');
   }, 300 + bootLines.length*380 + 500);
 
+  // ---------- cinematic screens ----------
   document.documentElement.classList.add('screens-active');
 
   const screens = document.querySelectorAll('.screen');
@@ -509,12 +536,14 @@
   }, { threshold: [0, 0.5, 1] });
   screens.forEach(s=> screenObserver.observe(s));
 
+  // ---------- reveal on scroll ----------
   const stops = document.querySelectorAll('.stop');
   const io = new IntersectionObserver((entries)=>{
     entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
   }, { threshold: 0.15 });
   stops.forEach(s=>io.observe(s));
 
+  // ---------- typewriter for AlumnX IDE block ----------
   const codeHTML = [
     {t:'const ', c:'kw'}, {t:'project', c:'var'}, {t:' = {\n', c:''},
     {t:'  name: ', c:''}, {t:'"AlumnX"', c:'str'}, {t:',\n', c:''},
@@ -557,6 +586,7 @@
   }, { threshold: 0.4 });
   ideObserver.observe(document.querySelector('.ide'));
 
+  // ---------- smoothed road / HUD / trail ----------
   const progressPath = document.getElementById('progressPath');
   const roadPathRef = document.getElementById('roadPath');
   const boardMarker = document.getElementById('boardMarker');
@@ -623,12 +653,13 @@
   }
   requestAnimationFrame(tick);
 
+  // ---------- card tilt micro-interaction ----------
   document.querySelectorAll('.card').forEach(card=>{
     card.addEventListener('mousemove', (e)=>{
       const r = card.getBoundingClientRect();
       const x = (e.clientX - r.left)/r.width - 0.5;
       const y = (e.clientY - r.top)/r.height - 0.5;
-      card.style.transform = 'perspective(600px) rotateX(' + ((-y*4).toFixed(2)) + 'deg) rotateY(' + ((x*4).toFixed(2)) + 'deg) translateY(-2px)';
+      card.style.transform = `perspective(600px) rotateX(${(-y*4).toFixed(2)}deg) rotateY(${(x*4).toFixed(2)}deg) translateY(-2px)`;
     });
     card.addEventListener('mouseleave', ()=>{ card.style.transform = ''; });
   });
