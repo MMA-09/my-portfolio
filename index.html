@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Your Name] — The Long Line</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --asphalt: #14161b;
+    --asphalt-2: #1c1f26;
+    --concrete: #f3f1ea;
+    --concrete-dim: #a9a9a4;
+    --grip: #ff5a36;
+    --grip-dim: #ff5a3633;
+    --lane: #ffcc33;
+    --teal: #4fd1c5;
+    --line: #33363f;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--asphalt);
+    color:var(--concrete);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--grip); color:#14161b; }
+
+  h1,h2,h3{ font-family:'Space Grotesk', sans-serif; letter-spacing:-0.02em; }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+
+  a{ color:inherit; }
+
+  /* ---------- background grain / texture ---------- */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.02), transparent 40%),
+      radial-gradient(circle at 80% 60%, rgba(255,90,54,0.04), transparent 45%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* ---------- the road ---------- */
+  .road-wrap{
+    position:absolute;
+    top:0; left:50%; transform:translateX(-50%);
+    width:120px;
+    height:100%;
+    z-index:1;
+    pointer-events:none;
+  }
+  .road-wrap svg{ width:100%; height:100%; display:block; }
+  #roadPath{
+    fill:none;
+    stroke:var(--asphalt-2);
+    stroke-width:64;
+    stroke-linecap:round;
+  }
+  #roadEdgeL, #roadEdgeR{
+    fill:none;
+    stroke:#000;
+    stroke-opacity:0.35;
+    stroke-width:66;
+  }
+  #laneDash{
+    fill:none;
+    stroke:var(--lane);
+    stroke-width:3;
+    stroke-dasharray:14 18;
+    stroke-linecap:round;
+    opacity:0.55;
+  }
+  #progressPath{
+    fill:none;
+    stroke:var(--grip);
+    stroke-width:5;
+    stroke-linecap:round;
+    filter:drop-shadow(0 0 6px rgba(255,90,54,0.7));
+  }
+  #boardMarker{
+    font-size:26px;
+    transform-origin:center;
+    filter:drop-shadow(0 0 8px rgba(255,90,54,0.6));
+  }
+
+  @media (max-width: 720px){
+    .road-wrap{ width:64px; }
+    #roadPath, #roadEdgeL, #roadEdgeR{ stroke-width:40px; }
+  }
+
+  /* ---------- layout shell ---------- */
+  .container{
+    position:relative;
+    z-index:2;
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 32px;
+  }
+
+  section{ position:relative; padding:140px 0; }
+  @media (max-width:720px){ section{ padding:90px 0; } }
+
+  .stop{
+    max-width:460px;
+    opacity:0;
+    transform:translateY(40px);
+    transition:opacity 0.8s ease, transform 0.8s ease;
+  }
+  .stop.visible{ opacity:1; transform:translateY(0); }
+  .stop.left{ margin-right:auto; text-align:left; }
+  .stop.right{ margin-left:auto; text-align:left; }
+
+  @media (max-width:900px){
+    .stop{ max-width:100%; margin:0 !important; }
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--grip);
+    margin-bottom:14px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:24px; height:1px;
+    background:var(--grip);
+    display:inline-block;
+  }
+
+  .stat-row{ display:flex; gap:36px; flex-wrap:wrap; margin-top:28px; }
+  .stat{ }
+  .stat .num{ font-family:'Space Grotesk'; font-size:34px; font-weight:700; color:var(--concrete); }
+  .stat .label{ font-size:12px; color:var(--concrete-dim); font-family:'JetBrains Mono'; margin-top:2px; }
+
+  p{ color:var(--concrete-dim); line-height:1.65; font-size:15.5px; }
+  .lede{ color:var(--concrete); font-size:19px; line-height:1.5; }
+
+  .card{
+    background:linear-gradient(160deg, #1d2027, #171a20);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:26px 28px;
+    margin-top:18px;
+  }
+  .card h3{ font-size:18px; margin-bottom:6px; }
+  .card .tag{
+    display:inline-block;
+    font-family:'JetBrains Mono'; font-size:11px;
+    color:var(--teal); background:rgba(79,209,197,0.1);
+    border:1px solid rgba(79,209,197,0.25);
+    padding:3px 8px; border-radius:20px;
+    margin-bottom:10px;
+  }
+  .card .tag.grip{ color:var(--grip); background:var(--grip-dim); border-color:rgba(255,90,54,0.3); }
+  .card p{ font-size:14.5px; margin-top:8px; }
+  .card a.link{ display:inline-block; margin-top:10px; font-size:13px; color:var(--concrete); border-bottom:1px solid var(--grip); }
+
+  .honor-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:24px; }
+  @media (max-width:520px){ .honor-grid{ grid-template-columns:1fr; } }
+  .honor{
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+    background:rgba(255,255,255,0.015);
+  }
+  .honor .n{ font-family:'JetBrains Mono'; font-size:11px; color:var(--lane); }
+  .honor .t{ font-size:14px; margin-top:6px; color:var(--concrete); }
+
+  /* ---------- hero ---------- */
+  .hero{
+    min-height:100svh;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    text-align:center;
+    padding-top:60px;
+  }
+  .hero .kicker{
+    font-family:'JetBrains Mono'; font-size:13px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--concrete-dim); margin-bottom:20px;
+  }
+  .hero h1{
+    font-size:clamp(40px, 8vw, 84px);
+    font-weight:700;
+    line-height:1.02;
+  }
+  .hero h1 span{ color:var(--grip); }
+  .hero .sub{
+    max-width:560px;
+    margin-top:22px;
+    font-size:17px;
+    color:var(--concrete-dim);
+  }
+  .scroll-cue{
+    margin-top:56px;
+    font-family:'JetBrains Mono'; font-size:12px; color:var(--concrete-dim);
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .scroll-cue .wheel{
+    width:1px; height:36px; background:linear-gradient(var(--grip), transparent);
+    animation:pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  /* ---------- footer ---------- */
+  footer{
+    padding:100px 0 60px;
+    text-align:center;
+    border-top:1px solid var(--line);
+  }
+  footer h2{ font-size:32px; margin-bottom:16px; }
+  .footer-links{ margin-top:26px; display:flex; gap:26px; justify-content:center; flex-wrap:wrap; }
+  .footer-links a{
+    font-family:'JetBrains Mono'; font-size:13px;
+    padding:10px 18px; border:1px solid var(--line); border-radius:30px;
+    transition:border-color .2s, color .2s;
+  }
+  .footer-links a:hover{ border-color:var(--grip); color:var(--grip); }
+  footer .foot-meta{ margin-top:60px; font-size:12px; color:var(--concrete-dim); font-family:'JetBrains Mono'; }
+
+  h2.section-title{ font-size:clamp(24px,4vw,32px); margin-bottom:14px; }
+</style>
+</head>
+<body>
+
+<div class="road-wrap">
+  <svg viewBox="0 0 120 4400" preserveAspectRatio="none" id="roadSvg">
+    <path id="roadEdgeL" d="M60,0 C10,300 110,600 60,900 C10,1200 110,1500 60,1800 C10,2100 110,2400 60,2700 C10,3000 110,3300 60,3600 C10,3900 60,4200 60,4400" />
+    <path id="roadEdgeR" d="M60,0 C10,300 110,600 60,900 C10,1200 110,1500 60,1800 C10,2100 110,2400 60,2700 C10,3000 110,3300 60,3600 C10,3900 60,4200 60,4400" />
+    <path id="roadPath" d="M60,0 C10,300 110,600 60,900 C10,1200 110,1500 60,1800 C10,2100 110,2400 60,2700 C10,3000 110,3300 60,3600 C10,3900 60,4200 60,4400" />
+    <path id="laneDash" d="M60,0 C10,300 110,600 60,900 C10,1200 110,1500 60,1800 C10,2100 110,2400 60,2700 C10,3000 110,3300 60,3600 C10,3900 60,4200 60,4400" />
+    <path id="progressPath" d="M60,0 C10,300 110,600 60,900 C10,1200 110,1500 60,1800 C10,2100 110,2400 60,2700 C10,3000 110,3300 60,3600 C10,3900 60,4200 60,4400"
+      stroke-dasharray="4400" stroke-dashoffset="4400" />
+  </svg>
+  <div id="boardMarker" style="position:absolute; top:0; left:50%;">🛹</div>
+</div>
+
+<div class="container">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="kicker">[Your Name] · builder · first-gen</div>
+    <h1>Six years on a board.<br>A lifetime <span>figuring things out.</span></h1>
+    <p class="sub">Computer Science applicant. I ship things — apps, hardware, curricula — for people who don't usually get access to any of it. Skateboarding taught me the falling part. Everything else is just balance.</p>
+    <div class="scroll-cue">
+      <span>ride the line</span>
+      <div class="wheel"></div>
+    </div>
+  </section>
+
+  <!-- ORIGIN -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Origin</div>
+      <h2 class="section-title">Nobody was pushing me. I learned to push myself.</h2>
+      <p class="lede">First-generation, Hispanic/South Asian, not asking for much — that's the starting line. Skateboarding has been the constant on the side for six years: no team, no coach, just repetition until the trick lands. That's basically the same process I use for every project below.</p>
+      <div class="stat-row">
+        <div class="stat"><div class="num">6+</div><div class="label">yrs skateboarding</div></div>
+        <div class="stat"><div class="num">100%</div><div class="label">IBDP scholarship</div></div>
+        <div class="stat"><div class="num">4x</div><div class="label">hackathon wins</div></div>
+        <div class="stat"><div class="num">1st</div><div class="label">gen college applicant</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILD LOG -->
+  <section>
+    <div class="stop right">
+      <div class="eyebrow">Build log</div>
+      <h2 class="section-title">Things I've actually shipped</h2>
+      <p>Not class assignments — products, hardware, and tools built because a problem was in front of me and I wanted it solved.</p>
+
+      <div class="card">
+        <span class="tag grip">co-founder · technical lead</span>
+        <h3>VeriBuy</h3>
+        <p>A price-intelligence platform for the cosmetics market. Built the core system integrating SerpAPI to pull and rank real-time pricing across retailers — up to 40 results per query, with reliability signals baked in so people actually trust what they're buying. Semifinalist, GW New Venture Competition (top 10 of 200 teams). Applied to Y Combinator.</p>
+        <a class="link" href="#">vercel.veribuy.app →</a>
+      </div>
+
+      <div class="card">
+        <span class="tag">in progress</span>
+        <h3>AlumnX</h3>
+        <p>A mentorship platform connecting graduating students with alumni for campus info and application guidance — built as a networking app for kids at my school and lower-funded schools alike, so networking access doesn't start and end with who your parents know. Building toward AI-driven mentor matching and a sustainable premium tier.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">hackathon build</span>
+        <h3>RebootAE</h3>
+        <p>Built in 48 hours at a University of Birmingham Dubai hackathon. Snap a photo of a broken or unwanted device, get a reparability score and reuse suggestions instead of throwing it out — with a chatbot wired in so people can ask questions about what they've uploaded. One of 5 founders.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag grip">personal project · G10</span>
+        <h3>Blind Walking Stick</h3>
+        <p>An Arduino-based assistive mobility device for visually impaired users — ultrasonic sensing, calibrated thresholds, real-time auditory/vibrational feedback. Also wrote up and shared the build process so people in underdeveloped communities could replicate the project without needing to start from scratch.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">G9 · aviation</span>
+        <h3>Glider Performance Model</h3>
+        <p>A Python regression model (Matplotlib) analyzing how wing dimensions, mass distribution, and component placement affected flight distance — my first real taste of using code to actually predict something physical, not just compute it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Work experience</div>
+      <h2 class="section-title">Getting paid to build for real users</h2>
+      <div class="card">
+        <span class="tag grip">3-month internship · return offer</span>
+        <h3>STIDAX — Software Engineer Intern</h3>
+        <p>Shipped a fully deployable site (HTML/CSS + modern tooling: Vercel, Cursor, PyCharm). Built something used internally by the company and helped fix live production crashes. Earned a return offer.</p>
+      </div>
+      <div class="card">
+        <span class="tag">9 weeks · Apple-certified</span>
+        <h3>Mobile App Development & AI-Powered Coding</h3>
+        <p>Structured iOS training — built functional apps in Swift/Xcode, learned UI/UX and debugging fundamentals, and used AI coding tools to move faster without losing rigor.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICE / TEACHING -->
+  <section>
+    <div class="stop right">
+      <div class="eyebrow">Teaching & service</div>
+      <h2 class="section-title">Access, not just achievement</h2>
+      <p>The through-line across everything below: take something I had to learn the hard way, and make it easier for the next person to get.</p>
+
+      <div class="card">
+        <span class="tag grip">founder</span>
+        <h3>Python Club & Math Club</h3>
+        <p>Taught grades 6–8 programming fundamentals and math problem-solving — walked younger students through my own coding portfolio projects and helped them build their own. Partnered with lower-funded schools so the reach wasn't limited to one campus.</p>
+      </div>
+      <div class="card">
+        <span class="tag">TEDx speaker</span>
+        <h3>Digital Footprints</h3>
+        <p>Spoke at my school's first-ever TEDx event on how the digital footprints we leave as kids follow us longer than we think. Also wrote two books on tech literacy, published on Amazon.</p>
+      </div>
+      <div class="card">
+        <span class="tag">small business</span>
+        <h3>Local Business Support</h3>
+        <p>Run a small operation building websites and managing social media for local businesses that couldn't otherwise afford a digital presence.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ATHLETICS/LEADERSHIP -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Leadership & athletics</div>
+      <h2 class="section-title">Captaincy isn't just a title</h2>
+      <div class="card">
+        <span class="tag grip">4x captain</span>
+        <h3>Volleyball — U16 DASSA</h3>
+        <p>Represented my school for 3 years running (5th → 2nd → season cut short by geopolitical circumstances while sitting 2nd). Captain across 4 years — helped the team win their division.</p>
+      </div>
+      <div class="card">
+        <span class="tag">student government</span>
+        <h3>Deputy Head of House</h3>
+        <p>Ran a school-wide ECA Fair alongside fellow deputies — managing rep coordination, communication, and execution in a fast-paced, student-led environment.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESEARCH -->
+  <section>
+    <div class="stop right">
+      <div class="eyebrow">Research</div>
+      <h2 class="section-title">Writing it down, not just building it</h2>
+      <p>Three research papers published on LinkedIn and arXiv — because building something is only half the job if nobody else can learn from it.</p>
+      <div class="card">
+        <span class="tag">paper 01</span>
+        <h3>[Paper title]</h3>
+        <p>[One-line abstract]</p>
+        <a class="link" href="#">arXiv →</a>
+      </div>
+      <div class="card">
+        <span class="tag">paper 02</span>
+        <h3>[Paper title]</h3>
+        <p>[One-line abstract]</p>
+        <a class="link" href="#">arXiv →</a>
+      </div>
+      <div class="card">
+        <span class="tag">paper 03</span>
+        <h3>[Paper title]</h3>
+        <p>[One-line abstract]</p>
+        <a class="link" href="#">arXiv →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- HONORS -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Honors</div>
+      <h2 class="section-title">The scoreboard</h2>
+      <div class="honor-grid">
+        <div class="honor"><div class="n">01</div><div class="t">4x Hackathon Wins</div></div>
+        <div class="honor"><div class="n">02</div><div class="t">Math Olympiad — Global Finalist</div></div>
+        <div class="honor"><div class="n">03</div><div class="t">GW New Venture Semifinalist</div></div>
+        <div class="honor"><div class="n">04</div><div class="t">FLL Masterpiece — Nationals</div></div>
+        <div class="honor"><div class="n">05</div><div class="t">Centre of Excellence, Aviation (20/110)</div></div>
+        <div class="honor"><div class="n">06</div><div class="t">100% IBDP Scholarship, 2 years</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <h2>Next stop: college.</h2>
+    <p style="max-width:480px;margin:0 auto;">Looking for a CS program that treats "access" as more than a buzzword — and a place to keep building things that outlast the semester they were built in.</p>
+    <div class="footer-links">
+      <a href="mailto:you@email.com">Email</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">GitHub</a>
+      <a href="#">Amazon Books</a>
+    </div>
+    <div class="foot-meta">[Your Name] · six years on a board · always still learning</div>
+  </footer>
+
+</div>
+
+<script>
+  // Reveal stops on scroll
+  const stops = document.querySelectorAll('.stop');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.15 });
+  stops.forEach(s=>io.observe(s));
+
+  // Animate board marker + progress line along the road path as user scrolls
+  const progressPath = document.getElementById('progressPath');
+  const roadPathRef = document.getElementById('roadPath');
+  const boardMarker = document.getElementById('boardMarker');
+  const roadSvg = document.getElementById('roadSvg');
+  const pathLength = roadPathRef.getTotalLength();
+  progressPath.style.strokeDasharray = pathLength;
+  progressPath.style.strokeDashoffset = pathLength;
+
+  function updateRoad(){
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const frac = Math.min(Math.max(scrollTop / docHeight, 0), 1);
+
+    progressPath.style.strokeDashoffset = pathLength * (1 - frac);
+
+    // position marker along path
+    const pt = roadPathRef.getPointAtLength(pathLength * frac);
+    const viewBoxHeight = 4400;
+    const svgHeight = roadSvg.getBoundingClientRect().height;
+    const scale = svgHeight / viewBoxHeight;
+    const xPercent = (pt.x / 120) * 100;
+    boardMarker.style.left = xPercent + '%';
+    boardMarker.style.top = (pt.y * scale) + 'px';
+    boardMarker.style.transform = 'translate(-50%, -50%) rotate(' + (frac*720) + 'deg)';
+  }
+
+  window.addEventListener('scroll', updateRoad, { passive:true });
+  window.addEventListener('resize', updateRoad);
+  updateRoad();
+</script>
+
+</body>
+</html>
