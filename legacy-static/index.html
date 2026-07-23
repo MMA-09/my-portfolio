@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Your Name] — build log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root{
+    --asphalt:#0d0f13; --asphalt-2:#161920; --panel:#12151b;
+    --concrete:#f3f1ea; --concrete-dim:#9a9a97;
+    --grip:#ff5a36; --grip-dim:#ff5a3633;
+    --lane:#ffcc33; --teal:#4fd1c5; --line:#2a2e37;
+    --syn-kw:#ff7a5c; --syn-str:#8fd7a3; --syn-var:#6fb3ff; --syn-com:#5a5f6b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--asphalt); color:var(--concrete);
+    font-family:'Inter',sans-serif; overflow-x:hidden; -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--grip);color:#0d0f13;}
+  h1,h2,h3{font-family:'Space Grotesk',sans-serif;letter-spacing:-0.02em;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;} }
+
+  /* ---------- boot sequence ---------- */
+  #boot{
+    position:fixed; inset:0; z-index:9999; background:#08090c;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; color:#8fd7a3; font-size:14px;
+    transition:opacity .6s ease, visibility .6s ease;
+  }
+  #boot.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+  #boot-lines{ width:520px; max-width:86vw; }
+  #boot-lines div{ opacity:0; margin-bottom:6px; white-space:pre; }
+  #boot-lines div.show{ opacity:1; }
+  #boot-cursor{ display:inline-block; width:8px; height:14px; background:#8fd7a3; margin-left:4px; animation:blink 1s step-end infinite; vertical-align:middle;}
+  @keyframes blink{ 50%{opacity:0;} }
+
+  /* ---------- 3D stage (fixed WebGL canvas behind the chapter screens) ---------- */
+  #webgl-canvas{
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    transition:opacity .9s ease; opacity:0;
+  }
+  #webgl-canvas.show{ opacity:1; }
+  .chapters-scrim{
+    position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0;
+    background:linear-gradient(180deg, rgba(8,9,12,.6) 0%, rgba(8,9,12,.08) 30%, rgba(8,9,12,.18) 62%, rgba(8,9,12,.85) 100%);
+    transition:opacity .9s ease;
+  }
+  .chapters-scrim.show{ opacity:1; }
+  #flip-hotspot{
+    position:fixed; left:50%; top:52%; width:min(46vmin,420px); height:min(46vmin,420px);
+    transform:translate(-50%,-50%); border-radius:50%; z-index:3; cursor:pointer;
+    opacity:0; pointer-events:none; transition:opacity .9s ease;
+  }
+  #flip-hotspot.show{ opacity:1; pointer-events:auto; }
+  @media (max-width:720px){ #flip-hotspot{ width:70vmin; height:70vmin; } }
+
+  /* ---------- cinematic intro screens ---------- */
+  html.screens-active{ scroll-snap-type: y proximity; }
+  #chapters{ position:relative; }
+  .screen{
+    position:relative; min-height:100svh; display:flex; align-items:flex-end; justify-content:center;
+    scroll-snap-align:start; overflow:hidden; text-align:center; padding-bottom:9vh;
+    width:100vw; margin-left:calc(50% - 50vw);
+  }
+  .screen-content{
+    position:relative; z-index:2; opacity:0; transform:translateY(40px) scale(.96);
+    transition:opacity 1s cubic-bezier(.16,1,.3,1), transform 1.1s cubic-bezier(.16,1,.3,1);
+  }
+  .screen.active .screen-content{ opacity:1; transform:translateY(0) scale(1); }
+  .screen .tag-line{ font-family:'JetBrains Mono'; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--grip); margin-bottom:18px; }
+  .screen h2.screen-title{ font-size:clamp(38px,7vw,72px); line-height:1; }
+  .screen p.screen-sub{ max-width:520px; margin:20px auto 0; color:var(--concrete-dim); font-size:16px; }
+
+  /* dots nav */
+  #screenDots{ position:fixed; right:24px; top:50%; transform:translateY(-50%); z-index:400; display:flex; flex-direction:column; gap:12px; }
+  #screenDots span{ width:7px; height:7px; border-radius:50%; background:var(--line); transition:background .3s, transform .3s; display:block; }
+  #screenDots span.on{ background:var(--grip); transform:scale(1.5); }
+  @media (max-width:720px){ #screenDots{ display:none; } }
+
+  .enter-btn{
+    margin-top:34px; display:inline-block; font-family:'JetBrains Mono'; font-size:13px; letter-spacing:.08em;
+    padding:12px 26px; border:1px solid var(--grip); border-radius:30px; color:var(--concrete); text-decoration:none;
+    transition:background .3s, color .3s; position:relative; z-index:4; pointer-events:auto;
+  }
+  .enter-btn:hover{ background:var(--grip); color:#0d0f13; }
+
+  .flip-hint{
+    margin-top:22px; font-family:'JetBrains Mono'; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--concrete-dim); opacity:.75; display:flex; align-items:center; gap:8px; justify-content:center;
+  }
+  .flip-hint::before{ content:"◆"; color:var(--grip); font-size:8px; animation:pulse 1.8s ease-in-out infinite; }
+
+  /* ---------- HUD ---------- */
+  #hud{
+    position:fixed; top:20px; right:20px; z-index:500;
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--concrete-dim);
+    text-align:right; letter-spacing:0.04em; pointer-events:none;
+    opacity:0; transition:opacity .6s ease;
+  }
+  #hud.show{opacity:1;}
+  #hud .pct{ font-size:15px; color:var(--concrete); font-weight:600; }
+  #hud .frame{ margin-top:2px; }
+  #hud .bar{ width:90px; height:2px; background:var(--line); margin-top:8px; margin-left:auto; position:relative; overflow:hidden; }
+  #hud .bar i{ position:absolute; left:0; top:0; height:100%; width:0%; background:var(--grip); }
+  @media (max-width:720px){ #hud{ display:none; } }
+
+  body::before{
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.025), transparent 40%),
+      radial-gradient(circle at 80% 60%, rgba(255,90,54,0.05), transparent 45%);
+  }
+
+  /* ---------- shell ---------- */
+  .container{ position:relative; z-index:2; max-width:1180px; margin:0 auto; padding:0 32px; }
+  section{ position:relative; padding:150px 0; }
+  @media (max-width:720px){ section{padding:100px 0;} }
+
+  .stop{ max-width:480px; opacity:0; transform:translateY(50px) scale(.98); transition:opacity 1s cubic-bezier(.16,1,.3,1), transform 1s cubic-bezier(.16,1,.3,1); }
+  .stop.visible{ opacity:1; transform:translateY(0) scale(1); }
+  .stop.left{ margin-right:auto; text-align:left; }
+  .stop.right{ margin-left:auto; text-align:left; }
+  .stop.wide{ max-width:640px; }
+  @media (max-width:900px){ .stop{max-width:100% !important; margin:0 !important;} }
+
+  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--grip); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+  .eyebrow::before{ content:""; width:24px; height:1px; background:var(--grip); }
+
+  .stat-row{ display:flex; gap:36px; flex-wrap:wrap; margin-top:28px; }
+  .stat .num{ font-family:'Space Grotesk'; font-size:34px; font-weight:700; }
+  .stat .label{ font-size:12px; color:var(--concrete-dim); font-family:'JetBrains Mono'; margin-top:2px; }
+
+  p{ color:var(--concrete-dim); line-height:1.65; font-size:15.5px; }
+  .lede{ color:var(--concrete); font-size:19px; line-height:1.5; }
+
+  .card{
+    background:linear-gradient(160deg,#181b22,#121419); border:1px solid var(--line); border-radius:14px;
+    padding:26px 28px; margin-top:18px; transition:transform .35s cubic-bezier(.16,1,.3,1), border-color .35s, box-shadow .35s;
+    will-change:transform;
+  }
+  .card:hover{ border-color:#3a3f4a; box-shadow:0 20px 40px -20px rgba(0,0,0,.6); }
+  .card h3{ font-size:18px; margin-bottom:6px; }
+  .card .tag{ display:inline-block; font-family:'JetBrains Mono'; font-size:11px; color:var(--teal); background:rgba(79,209,197,.1); border:1px solid rgba(79,209,197,.25); padding:3px 8px; border-radius:20px; margin-bottom:10px; }
+  .card .tag.grip{ color:var(--grip); background:var(--grip-dim); border-color:rgba(255,90,54,.3); }
+  .card p{ font-size:14.5px; margin-top:8px; }
+  .card a.link{ display:inline-block; margin-top:10px; font-size:13px; border-bottom:1px solid var(--grip); }
+
+  .honor-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:24px; }
+  @media (max-width:520px){ .honor-grid{grid-template-columns:1fr;} }
+  .honor{ border:1px solid var(--line); border-radius:10px; padding:16px 18px; background:rgba(255,255,255,.015); transition:border-color .3s; }
+  .honor:hover{ border-color:var(--lane); }
+  .honor .n{ font-family:'JetBrains Mono'; font-size:11px; color:var(--lane); }
+  .honor .t{ font-size:14px; margin-top:6px; }
+
+  /* ---------- hero ---------- */
+  .hero{ display:flex; flex-direction:column; justify-content:flex-end; align-items:center; text-align:center; }
+  .hero .kicker{ font-family:'JetBrains Mono'; font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--concrete-dim); margin-bottom:20px; opacity:0; animation:fadeUp .8s .1s forwards; }
+  .hero h1{ font-size:clamp(40px,8vw,84px); font-weight:700; line-height:1.02; opacity:0; animation:fadeUp .9s .25s forwards; }
+  .hero h1 span{ color:var(--grip); }
+  .hero .sub{ max-width:560px; margin-top:22px; font-size:17px; color:var(--concrete-dim); opacity:0; animation:fadeUp .9s .4s forwards; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(24px);} to{opacity:1; transform:translateY(0);} }
+  .scroll-cue{ margin-top:56px; font-family:'JetBrains Mono'; font-size:12px; color:var(--concrete-dim); display:flex; flex-direction:column; align-items:center; gap:8px; opacity:0; animation:fadeUp .9s .6s forwards; }
+  .scroll-cue .wheel{ width:1px; height:36px; background:linear-gradient(var(--grip),transparent); animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:.3;} 50%{opacity:1;} }
+
+  /* ---------- IDE / code editor block ---------- */
+  .ide{
+    background:#0b0d11; border:1px solid var(--line); border-radius:12px; overflow:hidden;
+    margin-top:24px; box-shadow:0 30px 60px -30px rgba(0,0,0,.7);
+  }
+  .ide-titlebar{ display:flex; align-items:center; gap:14px; padding:10px 14px; background:#14171d; border-bottom:1px solid var(--line); }
+  .ide-dots{ display:flex; gap:7px; }
+  .ide-dots span{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .ide-dots .r{ background:#ff5f57; } .ide-dots .y{ background:#febc2e; } .ide-dots .g{ background:#28c840; }
+  .ide-tabs{ display:flex; gap:2px; font-family:'JetBrains Mono'; font-size:12px; }
+  .ide-tabs span{ padding:5px 12px; border-radius:6px 6px 0 0; color:var(--concrete-dim); }
+  .ide-tabs span.active{ background:#0b0d11; color:var(--concrete); }
+  .ide-body{ display:flex; font-family:'JetBrains Mono'; font-size:13px; line-height:1.7; padding:18px 0; }
+  .ide-gutter{ color:#3d424d; text-align:right; padding:0 14px; user-select:none; white-space:pre-line; }
+  .ide-code{ padding:0 18px 0 6px; color:var(--concrete-dim); white-space:pre-wrap; flex:1; }
+  .kw{ color:var(--syn-kw); } .str{ color:var(--syn-str); } .var{ color:var(--syn-var); } .com{ color:var(--syn-com); }
+  .type-cursor{ display:inline-block; width:7px; height:15px; background:var(--teal); vertical-align:-2px; animation:blink .9s step-end infinite; }
+  .ide-status{ display:flex; justify-content:space-between; padding:8px 16px; border-top:1px solid var(--line); font-family:'JetBrains Mono'; font-size:11px; color:var(--concrete-dim); }
+  .ide-status .live-dot{ width:6px; height:6px; border-radius:50%; background:var(--teal); display:inline-block; margin-right:6px; box-shadow:0 0 8px var(--teal); }
+
+  /* ---------- footer ---------- */
+  footer{ padding:110px 0 60px; text-align:center; border-top:1px solid var(--line); }
+  footer h2{ font-size:32px; margin-bottom:16px; }
+  .footer-links{ margin-top:26px; display:flex; gap:26px; justify-content:center; flex-wrap:wrap; }
+  .footer-links a{ font-family:'JetBrains Mono'; font-size:13px; padding:10px 18px; border:1px solid var(--line); border-radius:30px; transition:border-color .2s,color .2s; }
+  .footer-links a:hover{ border-color:var(--grip); color:var(--grip); }
+  footer .foot-meta{ margin-top:60px; font-size:12px; color:var(--concrete-dim); font-family:'JetBrains Mono'; }
+
+  h2.section-title{ font-size:clamp(24px,4vw,32px); margin-bottom:14px; }
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div id="boot-lines">
+    <div>&gt; booting build_log.exe<span class="mono"></span></div>
+    <div>&gt; loading skateboard physics engine...</div>
+    <div>&gt; compiling six years of trial &amp; error...</div>
+    <div>&gt; mounting AlumnX (status: live)</div>
+    <div>&gt; ready<span id="boot-cursor"></span></div>
+  </div>
+</div>
+
+<div id="hud">
+  <div class="pct" id="hudPct">000%</div>
+  <div class="frame" id="hudFrame">CH 00 / 05</div>
+  <div class="bar"><i id="hudBar"></i></div>
+</div>
+
+<div id="screenDots">
+  <span data-s="titleScreen"></span>
+  <span data-s="robotScreen"></span>
+  <span data-s="bookScreen"></span>
+  <span data-s="codeScreen"></span>
+  <span data-s="interfaceScreen"></span>
+</div>
+
+<canvas id="webgl-canvas"></canvas>
+<div class="chapters-scrim"></div>
+<div id="flip-hotspot" title="click to kickflip"></div>
+
+<div class="container">
+
+  <div id="chapters">
+
+  <!-- SCREEN 0: TITLE -->
+  <section class="screen" id="titleScreen">
+    <div class="screen-content hero">
+      <div class="kicker">[Your Name] · builder · first-gen</div>
+      <h1>Six years on a board.<br>A lifetime <span>figuring things out.</span></h1>
+      <p class="sub">Computer Science applicant. I ship things — apps, hardware, curricula — for people who don't usually get access to any of it.</p>
+      <div class="scroll-cue"><span>scroll to play</span><div class="wheel"></div></div>
+      <div class="flip-hint">tap the board to kickflip</div>
+    </div>
+  </section>
+
+  <!-- SCREEN 1: MACHINES (trucks / bearings) -->
+  <section class="screen" id="robotScreen">
+    <div class="screen-content">
+      <div class="tag-line">Chapter 01 · Machines</div>
+      <h2 class="screen-title">It starts with<br>how things think.</h2>
+      <p class="screen-sub">Sensors, feedback loops, systems that respond to the world — the same logic behind an Arduino-powered walking stick I built for someone who couldn't see the road ahead.</p>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: STUDY (grip tape) -->
+  <section class="screen" id="bookScreen">
+    <div class="screen-content">
+      <div class="tag-line">Chapter 02 · Study</div>
+      <h2 class="screen-title">Then it becomes<br>hours with a textbook.</h2>
+      <p class="screen-sub">Math AA, Physics, Computer Science HL — the structured branch. The self-taught courses on the side are where the real depth got built.</p>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: BUILD (underside graphic / wireframe) -->
+  <section class="screen" id="codeScreen">
+    <div class="screen-content">
+      <div class="tag-line">Chapter 03 · Build</div>
+      <h2 class="screen-title">Then it's just you<br>and a blinking cursor.</h2>
+      <p class="screen-sub">Every project below started as an empty file. AlumnX, VeriBuy, RebootAE — none of them existed until they were typed into being, line by line.</p>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: SHIP (launch) -->
+  <section class="screen" id="interfaceScreen">
+    <div class="screen-content">
+      <div class="tag-line">Chapter 04 · Ship</div>
+      <h2 class="screen-title">Then it's live —<br>and someone's using it.</h2>
+      <p class="screen-sub">That's the part that never gets old: watching something you built stop being a file on your laptop and start being a tool in someone else's hands.</p>
+      <a href="#alumnxScreen" class="enter-btn">see what I've shipped ↓</a>
+    </div>
+  </section>
+
+  </div><!-- /#chapters -->
+
+  <!-- ALUMNX FLAGSHIP -->
+  <section id="alumnxScreen">
+    <div class="stop right wide">
+      <div class="eyebrow">Flagship build · shipped</div>
+      <h2 class="section-title">AlumnX</h2>
+      <p class="lede">A mentorship platform connecting graduating students with alumni — built so networking access doesn't start and end with who your parents know.</p>
+
+      <div class="ide">
+        <div class="ide-titlebar">
+          <div class="ide-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+          <div class="ide-tabs"><span class="active">alumnx.config.ts</span><span>README.md</span></div>
+        </div>
+        <div class="ide-body">
+          <div class="ide-gutter">1
+2
+3
+4
+5
+6
+7
+8
+9
+10</div>
+          <div class="ide-code" id="typeTarget"></div>
+        </div>
+        <div class="ide-status"><span><span class="live-dot"></span>deployed · production</span><span>TypeScript · Next.js · Postgres</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ORIGIN -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Origin</div>
+      <h2 class="section-title">Nobody was pushing me. I learned to push myself.</h2>
+      <p class="lede">First-generation, Hispanic/South Asian, not asking for much — that's the starting line. Skateboarding has been the constant on the side for six years: no team, no coach, just repetition until the trick lands. That's basically the same process I use for every project below.</p>
+      <div class="stat-row">
+        <div class="stat"><div class="num">6+</div><div class="label">yrs skateboarding</div></div>
+        <div class="stat"><div class="num">100%</div><div class="label">IBDP scholarship</div></div>
+        <div class="stat"><div class="num">4x</div><div class="label">hackathon wins</div></div>
+        <div class="stat"><div class="num">1st</div><div class="label">gen college applicant</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILD LOG -->
+  <section>
+    <div class="stop right">
+      <div class="eyebrow">Build log</div>
+      <h2 class="section-title">More things I've shipped</h2>
+      <p>Products, hardware, and tools built because a problem was in front of me and I wanted it solved.</p>
+
+      <div class="card">
+        <span class="tag grip">co-founder · technical lead</span>
+        <h3>VeriBuy</h3>
+        <p>A price-intelligence platform for the cosmetics market. Built the core system integrating SerpAPI to pull and rank real-time pricing across retailers — up to 40 results per query, with reliability signals baked in. Semifinalist, GW New Venture Competition (top 10 of 200 teams). Applied to Y Combinator.</p>
+        <a class="link" href="#">vercel.veribuy.app →</a>
+      </div>
+
+      <div class="card">
+        <span class="tag">hackathon build</span>
+        <h3>RebootAE</h3>
+        <p>Built in 48 hours at a University of Birmingham Dubai hackathon. Snap a photo of a broken device, get a reparability score and reuse suggestions — with a chatbot wired in so people can ask questions. One of 5 founders.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag grip">personal project · G10</span>
+        <h3>Blind Walking Stick</h3>
+        <p>An Arduino-based assistive mobility device for visually impaired users — ultrasonic sensing, calibrated thresholds, real-time auditory/vibrational feedback. Shared the build process so others in underdeveloped communities could replicate it.</p>
+      </div>
+
+      <div class="card">
+        <span class="tag">G9 · aviation</span>
+        <h3>Glider Performance Model</h3>
+        <p>A Python regression model (Matplotlib) analyzing how wing dimensions, mass distribution, and component placement affected flight distance — my first real taste of using code to predict something physical.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Work experience</div>
+      <h2 class="section-title">Getting paid to build for real users</h2>
+      <div class="card">
+        <span class="tag grip">3-month internship · return offer</span>
+        <h3>STIDAX — Software Engineer Intern</h3>
+        <p>Shipped a fully deployable site (HTML/CSS + modern tooling: Vercel, Cursor, PyCharm). Built something used internally by the company and helped fix live production crashes. Earned a return offer.</p>
+      </div>
+      <div class="card">
+        <span class="tag">9 weeks · Apple-certified</span>
+        <h3>Mobile App Development & AI-Powered Coding</h3>
+        <p>Structured iOS training — built functional apps in Swift/Xcode, learned UI/UX and debugging fundamentals, and used AI coding tools to move faster without losing rigor.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICE -->
+  <section>
+    <div class="stop right">
+      <div class="eyebrow">Teaching & service</div>
+      <h2 class="section-title">Access, not just achievement</h2>
+      <p>The through-line across everything below: take something I had to learn the hard way, and make it easier for the next person to get.</p>
+      <div class="card">
+        <span class="tag grip">founder</span>
+        <h3>Python Club & Math Club</h3>
+        <p>Taught grades 6–8 programming fundamentals and math problem-solving — walked younger students through my own coding portfolio projects and helped them build their own. Partnered with lower-funded schools.</p>
+      </div>
+      <div class="card">
+        <span class="tag">TEDx speaker</span>
+        <h3>Digital Footprints</h3>
+        <p>Spoke at my school's first-ever TEDx event on digital footprints. Also wrote two books on tech literacy, published on Amazon.</p>
+      </div>
+      <div class="card">
+        <span class="tag">small business</span>
+        <h3>Local Business Support</h3>
+        <p>Run a small operation building websites and managing social media for local businesses that couldn't otherwise afford a digital presence.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEADERSHIP -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Leadership & athletics</div>
+      <h2 class="section-title">Captaincy isn't just a title</h2>
+      <div class="card">
+        <span class="tag grip">4x captain</span>
+        <h3>Volleyball — U16 DASSA</h3>
+        <p>Represented my school for 3 years running (5th → 2nd → season cut short by geopolitical circumstances while sitting 2nd). Captain across 4 years — helped the team win their division.</p>
+      </div>
+      <div class="card">
+        <span class="tag">student government</span>
+        <h3>Deputy Head of House</h3>
+        <p>Ran a school-wide ECA Fair alongside fellow deputies — managing rep coordination, communication, and execution in a fast-paced, student-led environment.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESEARCH -->
+  <section>
+    <div class="stop right">
+      <div class="eyebrow">Research</div>
+      <h2 class="section-title">Writing it down, not just building it</h2>
+      <p>Three research papers published on LinkedIn and arXiv — because building something is only half the job if nobody else can learn from it.</p>
+      <div class="card"><span class="tag">paper 01</span><h3>[Paper title]</h3><p>[One-line abstract]</p><a class="link" href="#">arXiv →</a></div>
+      <div class="card"><span class="tag">paper 02</span><h3>[Paper title]</h3><p>[One-line abstract]</p><a class="link" href="#">arXiv →</a></div>
+      <div class="card"><span class="tag">paper 03</span><h3>[Paper title]</h3><p>[One-line abstract]</p><a class="link" href="#">arXiv →</a></div>
+    </div>
+  </section>
+
+  <!-- HONORS -->
+  <section>
+    <div class="stop left">
+      <div class="eyebrow">Honors</div>
+      <h2 class="section-title">The scoreboard</h2>
+      <div class="honor-grid">
+        <div class="honor"><div class="n">01</div><div class="t">4x Hackathon Wins</div></div>
+        <div class="honor"><div class="n">02</div><div class="t">Math Olympiad — Global Finalist</div></div>
+        <div class="honor"><div class="n">03</div><div class="t">GW New Venture Semifinalist</div></div>
+        <div class="honor"><div class="n">04</div><div class="t">FLL Masterpiece — Nationals</div></div>
+        <div class="honor"><div class="n">05</div><div class="t">Centre of Excellence, Aviation (20/110)</div></div>
+        <div class="honor"><div class="n">06</div><div class="t">100% IBDP Scholarship, 2 years</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <h2>Next stop: college.</h2>
+    <p style="max-width:480px;margin:0 auto;">Looking for a CS program that treats "access" as more than a buzzword — and a place to keep building things that outlast the semester they were built in.</p>
+    <div class="footer-links">
+      <a href="mailto:you@email.com">Email</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">GitHub</a>
+      <a href="#">Amazon Books</a>
+    </div>
+    <div class="foot-meta">[Your Name] · six years on a board · always still learning</div>
+  </footer>
+
+</div>
+
+<script>
+  // ---------- boot sequence ----------
+  const bootLines = document.querySelectorAll('#boot-lines div');
+  bootLines.forEach((l,i)=> setTimeout(()=> l.classList.add('show'), 300 + i*380));
+  setTimeout(()=>{
+    document.getElementById('boot').classList.add('hide');
+    document.getElementById('hud').classList.add('show');
+  }, 300 + bootLines.length*380 + 500);
+
+  // ---------- cinematic screens ----------
+  document.documentElement.classList.add('screens-active');
+
+  const screens = document.querySelectorAll('.screen');
+  const dots = document.querySelectorAll('#screenDots span');
+  const screenObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting && e.intersectionRatio > 0.5){
+        e.target.classList.add('active');
+        dots.forEach(d=> d.classList.toggle('on', d.dataset.s === e.target.id));
+      } else if(!e.isIntersecting){
+        e.target.classList.remove('active');
+      }
+    });
+  }, { threshold: [0, 0.5, 1] });
+  screens.forEach(s=> screenObserver.observe(s));
+
+  // ---------- reveal on scroll ----------
+  const stops = document.querySelectorAll('.stop');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15 });
+  stops.forEach(s=>io.observe(s));
+
+  // ---------- typewriter for AlumnX IDE block ----------
+  const codeHTML = [
+    {t:'const ', c:'kw'}, {t:'project', c:'var'}, {t:' = {\n', c:''},
+    {t:'  name: ', c:''}, {t:'"AlumnX"', c:'str'}, {t:',\n', c:''},
+    {t:'  status: ', c:''}, {t:'"live"', c:'str'}, {t:',\n', c:''},
+    {t:'  users: ', c:''}, {t:'"students + alumni"', c:'str'}, {t:',\n', c:''},
+    {t:'  // connects grads with mentors,\n', c:'com'},
+    {t:'  // no gatekept networking\n', c:'com'},
+    {t:'  stack: [', c:''}, {t:'"Next.js"', c:'str'}, {t:', ', c:''}, {t:'"Postgres"', c:'str'}, {t:'],\n', c:''},
+    {t:'  impact: ', c:''}, {t:'"1st-gen access, first"', c:'str'}, {t:'\n};', c:''}
+  ];
+  const typeTarget = document.getElementById('typeTarget');
+  let typed = false;
+  function typeWriter(){
+    if(typed) return; typed = true;
+    let seq = [];
+    codeHTML.forEach(seg=>{ for(const ch of seg.t) seq.push({ch, c:seg.c}); });
+    let i=0;
+    const cursor = document.createElement('span'); cursor.className='type-cursor';
+    function step(){
+      if(i >= seq.length){ typeTarget.appendChild(cursor); return; }
+      const {ch,c} = seq[i];
+      if(c){
+        let lastSpan = typeTarget.lastElementChild;
+        if(!lastSpan || lastSpan.dataset.c !== c){
+          lastSpan = document.createElement('span');
+          lastSpan.className = c; lastSpan.dataset.c = c;
+          typeTarget.appendChild(lastSpan);
+        }
+        lastSpan.textContent += ch;
+      } else {
+        typeTarget.appendChild(document.createTextNode(ch));
+      }
+      i++;
+      setTimeout(step, 14 + Math.random()*18);
+    }
+    step();
+  }
+  const ideObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting) typeWriter(); });
+  }, { threshold: 0.4 });
+  ideObserver.observe(document.querySelector('.ide'));
+
+  // ---------- card tilt micro-interaction ----------
+  document.querySelectorAll('.card').forEach(card=>{
+    card.addEventListener('mousemove', (e)=>{
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left)/r.width - 0.5;
+      const y = (e.clientY - r.top)/r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateX(${(-y*4).toFixed(2)}deg) rotateY(${(x*4).toFixed(2)}deg) translateY(-2px)`;
+    });
+    card.addEventListener('mouseleave', ()=>{ card.style.transform = ''; });
+  });
+</script>
+
+<!-- ================== 3D SKATEBOARD STAGE ================== -->
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isTouch = matchMedia('(pointer: coarse)').matches;
+const canvas = document.getElementById('webgl-canvas');
+const scrim = document.querySelector('.chapters-scrim');
+const hotspot = document.getElementById('flip-hotspot');
+const chaptersEl = document.getElementById('chapters');
+const hudPct = document.getElementById('hudPct');
+const hudFrame = document.getElementById('hudFrame');
+const hudBar = document.getElementById('hudBar');
+
+let renderer;
+try{
+  renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true, powerPreference:'high-performance' });
+}catch(err){
+  renderer = null;
+}
+
+if(renderer){
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  const ASPHALT = 0x0d0f13, GRIP = 0xff5a36, LANE = 0xffcc33, TEAL = 0x4fd1c5;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(ASPHALT, 0.04);
+
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.05, 100);
+  camera.position.set(0, 0.9, 5.6);
+
+  // ---------- lights ----------
+  const ambient = new THREE.AmbientLight(0x9099aa, 0.55);
+  const key = new THREE.DirectionalLight(0xffffff, 1.0);
+  key.position.set(3, 4, 3);
+  const rim = new THREE.PointLight(GRIP, 6, 12, 2);
+  rim.position.set(-2, 1.2, -1.5);
+  const fill = new THREE.PointLight(TEAL, 2.2, 10, 2);
+  fill.position.set(2, -0.6, 2);
+  scene.add(ambient, key, rim, fill);
+
+  // ---------- canvas texture helpers ----------
+  function makeGripTexture(){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 1024;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#1c1f26'; ctx.fillRect(0,0,c.width,c.height);
+    for(let i=0;i<16000;i++){
+      const x = Math.random()*c.width, y = Math.random()*c.height;
+      const a = 0.12 + Math.random()*0.4;
+      ctx.fillStyle = `rgba(210,215,225,${a})`;
+      ctx.fillRect(x,y,1.4,1.4);
+    }
+    ctx.strokeStyle = 'rgba(255,90,54,0.35)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(c.width*0.5, c.height*0.08);
+    for(let y=c.height*0.08; y<=c.height*0.92; y+=40){
+      const x = c.width*0.5 + Math.sin(y*0.02)*18;
+      ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  function makeUndersideTexture(){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 1024;
+    const ctx = c.getContext('2d');
+    const g = ctx.createLinearGradient(0,0,0,c.height);
+    g.addColorStop(0,'#11151c'); g.addColorStop(0.5,'#0c0e13'); g.addColorStop(1,'#151016');
+    ctx.fillStyle = g; ctx.fillRect(0,0,c.width,c.height);
+
+    ctx.save();
+    ctx.translate(c.width/2, c.height/2);
+    ctx.strokeStyle = '#ff5a36'; ctx.lineWidth = 6; ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.arc(0,0,90,0.6,2.6); ctx.stroke();
+    ctx.strokeStyle = '#4fd1c5'; ctx.lineWidth = 5; ctx.globalAlpha = 0.75;
+    ctx.beginPath(); ctx.arc(0,0,140,2.2,4.4); ctx.stroke();
+    ctx.strokeStyle = '#ffcc33'; ctx.lineWidth = 4; ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.arc(0,0,190,-1.2,1.3); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for(let a=0; a<Math.PI*2; a+=Math.PI/9){
+      ctx.moveTo(Math.cos(a)*40, Math.sin(a)*40);
+      ctx.lineTo(Math.cos(a)*60, Math.sin(a)*60);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  function makeGridTexture(){
+    const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.strokeStyle = 'rgba(79,209,197,0.55)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1,1,c.width-2,c.height-2);
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(24, 48);
+    return tex;
+  }
+
+  function makeSpriteTexture(){
+    const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(32,32,0,32,32,32);
+    g.addColorStop(0,'rgba(255,255,255,1)');
+    g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+    return new THREE.CanvasTexture(c);
+  }
+
+  // ---------- skateboard ----------
+  const DECK_LEN = 3.0, DECK_W = 0.78, DECK_T = 0.085, HALF_W = DECK_W/2;
+
+  function buildDeckGeometry(){
+    const shape = new THREE.Shape();
+    shape.moveTo(-HALF_W*0.55, -DECK_LEN/2);
+    shape.quadraticCurveTo(-HALF_W, -DECK_LEN/2+0.28, -HALF_W, -DECK_LEN/2+0.6);
+    shape.lineTo(-HALF_W, DECK_LEN/2-0.6);
+    shape.quadraticCurveTo(-HALF_W, DECK_LEN/2-0.28, -HALF_W*0.55, DECK_LEN/2);
+    shape.lineTo(HALF_W*0.55, DECK_LEN/2);
+    shape.quadraticCurveTo(HALF_W, DECK_LEN/2-0.28, HALF_W, DECK_LEN/2-0.6);
+    shape.lineTo(HALF_W, -DECK_LEN/2+0.6);
+    shape.quadraticCurveTo(HALF_W, -DECK_LEN/2+0.28, HALF_W*0.55, -DECK_LEN/2);
+    shape.closePath();
+
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: DECK_T, bevelEnabled:true, bevelThickness:0.012, bevelSize:0.016, bevelSegments:3, curveSegments:16 });
+    geo.rotateX(-Math.PI/2);
+    geo.center();
+
+    const pos = geo.attributes.position;
+    for(let i=0;i<pos.count;i++){
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const lenFrac = Math.min(Math.abs(z)/(DECK_LEN/2), 1);
+      const kick = Math.pow(Math.max(lenFrac-0.6,0)/0.4, 2) * 0.05;
+      const concave = Math.pow(x/HALF_W, 2) * 0.012;
+      pos.setY(i, y + kick + concave);
+    }
+    pos.needsUpdate = true;
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  const deckMat = new THREE.MeshStandardMaterial({ color:0x14161c, roughness:0.55, metalness:0.08 });
+  const deck = new THREE.Mesh(buildDeckGeometry(), deckMat);
+
+  const gripTex = makeGripTexture();
+  const gripMat = new THREE.MeshStandardMaterial({ map:gripTex, roughness:0.95, metalness:0 });
+  const gripPlane = new THREE.Mesh(new THREE.PlaneGeometry(DECK_W*0.92, DECK_LEN*0.92), gripMat);
+  gripPlane.rotateX(-Math.PI/2);
+  gripPlane.position.y = DECK_T/2 + 0.006;
+
+  const underTex = makeUndersideTexture();
+  const underMat = new THREE.MeshStandardMaterial({
+    map:underTex, roughness:0.5, metalness:0.1,
+    emissive:new THREE.Color(GRIP), emissiveMap:underTex, emissiveIntensity:0.1
+  });
+  const underPlane = new THREE.Mesh(new THREE.PlaneGeometry(DECK_W*0.92, DECK_LEN*0.92), underMat);
+  underPlane.rotateX(Math.PI/2);
+  underPlane.position.y = -DECK_T/2 - 0.006;
+
+  const board = new THREE.Group();
+  board.add(deck, gripPlane, underPlane);
+
+  const metalMat = new THREE.MeshStandardMaterial({ color:0xb9bfc9, roughness:0.35, metalness:0.85 });
+  const wheelMat = new THREE.MeshStandardMaterial({ color:LANE, roughness:0.5, metalness:0.1 });
+
+  function buildTruck(zPos){
+    const g = new THREE.Group();
+    const baseplate = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.045,0.16), metalMat);
+    const hanger = new THREE.Mesh(new THREE.BoxGeometry(0.82,0.07,0.09), metalMat);
+    hanger.position.y = -0.075;
+    const kingpin = new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.11,8), metalMat);
+    kingpin.rotation.x = Math.PI/2;
+    kingpin.position.set(0,-0.025,0.045);
+    g.add(baseplate, hanger, kingpin);
+
+    [-1,1].forEach(side=>{
+      const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.014,0.014,0.16,8), metalMat);
+      axle.rotation.z = Math.PI/2;
+      axle.position.set(side*0.41, -0.075, 0);
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.13,0.085,20), wheelMat);
+      wheel.rotation.z = Math.PI/2;
+      wheel.position.set(side*0.46, -0.075, 0);
+      g.add(axle, wheel);
+    });
+
+    g.position.set(0, -DECK_T/2-0.02, zPos);
+    return g;
+  }
+  board.add(buildTruck(DECK_LEN/2 - 0.42), buildTruck(-(DECK_LEN/2 - 0.42)));
+
+  const boardBaseY = 0;
+  board.position.y = boardBaseY;
+  scene.add(board);
+
+  // ---------- floor grid ----------
+  const gridTex = makeGridTexture();
+  const floorMat = new THREE.MeshBasicMaterial({ map:gridTex, transparent:true, opacity:0.3, depthWrite:false });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40,90), floorMat);
+  floor.rotateX(-Math.PI/2);
+  floor.position.y = -1.5;
+  scene.add(floor);
+
+  // ---------- particles ----------
+  const PARTICLE_COUNT = 260;
+  const particleGeo = new THREE.BufferGeometry();
+  const particlePos = new Float32Array(PARTICLE_COUNT*3);
+  for(let i=0;i<PARTICLE_COUNT;i++){
+    particlePos[i*3+0] = (Math.random()-0.5)*10;
+    particlePos[i*3+1] = (Math.random()-0.5)*6;
+    particlePos[i*3+2] = (Math.random()-0.5)*14 - 2;
+  }
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos,3));
+  const particleMat = new THREE.PointsMaterial({
+    size:0.05, map:makeSpriteTexture(), transparent:true, opacity:0.5,
+    color:GRIP, blending:THREE.AdditiveBlending, depthWrite:false
+  });
+  const particles = new THREE.Points(particleGeo, particleMat);
+  scene.add(particles);
+
+  // ---------- chapter keyframes ----------
+  const KF = [
+    { pos:[0,0.5,4.8],    look:[0,-0.85,0], fov:40, rotX:0.12,  rotZ:0,    glow:0.12, boardZ:0,   scale:1.0,  color:GRIP, fog:0.035 },
+    { pos:[2.0,-0.3,3.0], look:[0,-1.0,0],  fov:34, rotX:-0.5,  rotZ:0.05, glow:0.4,  boardZ:0,   scale:1.0,  color:TEAL, fog:0.05  },
+    { pos:[0.3,3.2,3.0],  look:[0,-0.2,0],  fov:36, rotX:0.15,  rotZ:0,    glow:0.55, boardZ:0,   scale:1.0,  color:LANE, fog:0.04  },
+    { pos:[-2.6,-0.6,2.4],look:[0,-0.1,0],  fov:34, rotX:0.1,   rotZ:0.15, glow:0.95, boardZ:0,   scale:1.05, color:TEAL, fog:0.03  },
+    { pos:[0,0.15,3.8],   look:[0,-0.9,-2], fov:50, rotX:0.05,  rotZ:0,    glow:1.1,  boardZ:1.0, scale:1.1,  color:GRIP, fog:0.06  }
+  ];
+  const V = KF.map(k=>({ pos:new THREE.Vector3(...k.pos), look:new THREE.Vector3(...k.look) }));
+
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function lerpColor(a,b,t){ return new THREE.Color(a).lerp(new THREE.Color(b), t); }
+
+  // ---------- scroll-driven progress ----------
+  let targetFrac = 0, smoothFrac = 0;
+  function getChapterFrac(){
+    const total = chaptersEl.offsetHeight - window.innerHeight;
+    if(total <= 0) return 0;
+    const scrolled = window.scrollY - chaptersEl.offsetTop;
+    return Math.min(Math.max(scrolled/total, 0), 1);
+  }
+  function updateVisibility(){
+    const chaptersBottom = chaptersEl.offsetTop + chaptersEl.offsetHeight;
+    const past = window.scrollY - (chaptersBottom - window.innerHeight*0.35);
+    const inChapters = window.scrollY < chaptersBottom - window.innerHeight*0.15;
+    canvas.classList.toggle('show', inChapters || past < window.innerHeight*0.4);
+    scrim.classList.toggle('show', inChapters || past < window.innerHeight*0.4);
+    hotspot.classList.toggle('show', inChapters);
+  }
+  window.addEventListener('scroll', ()=>{ targetFrac = getChapterFrac(); updateVisibility(); }, { passive:true });
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    targetFrac = getChapterFrac();
+  });
+  targetFrac = getChapterFrac();
+  smoothFrac = targetFrac;
+  updateVisibility();
+  requestAnimationFrame(updateVisibility);
+
+  // ---------- pointer parallax ----------
+  let mouseX = 0, mouseY = 0, parX = 0, parY = 0;
+  if(!isTouch && !reduceMotion){
+    window.addEventListener('pointermove', (e)=>{
+      mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+    });
+  }
+
+  // ---------- kickflip interaction ----------
+  let spinVelocity = 0, extraSpin = 0;
+  function doFlip(){ spinVelocity += 22; }
+  hotspot.addEventListener('click', doFlip);
+  hotspot.addEventListener('touchstart', (e)=>{ e.preventDefault(); doFlip(); }, { passive:false });
+
+  // ---------- render loop ----------
+  const lookAtTarget = new THREE.Vector3();
+  const clock = new THREE.Clock();
+
+  function tick(){
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const t = clock.elapsedTime;
+
+    const smoothing = reduceMotion ? 1 : 0.07;
+    smoothFrac += (targetFrac - smoothFrac) * smoothing;
+
+    const span = KF.length - 1;
+    const scaled = smoothFrac * span;
+    const idx0 = Math.max(0, Math.min(KF.length-2, Math.floor(scaled)));
+    const idx1 = idx0 + 1;
+    const lt = scaled - idx0;
+
+    camera.position.lerpVectors(V[idx0].pos, V[idx1].pos, lt);
+    lookAtTarget.lerpVectors(V[idx0].look, V[idx1].look, lt);
+    camera.fov = lerp(KF[idx0].fov, KF[idx1].fov, lt);
+    camera.updateProjectionMatrix();
+    scene.fog.density = lerp(KF[idx0].fog, KF[idx1].fog, lt);
+
+    const rotX = lerp(KF[idx0].rotX, KF[idx1].rotX, lt);
+    const rotZ = lerp(KF[idx0].rotZ, KF[idx1].rotZ, lt);
+    const glow = lerp(KF[idx0].glow, KF[idx1].glow, lt);
+    const boardZ = lerp(KF[idx0].boardZ, KF[idx1].boardZ, lt);
+    const boardScale = lerp(KF[idx0].scale, KF[idx1].scale, lt);
+    const lightColor = lerpColor(KF[idx0].color, KF[idx1].color, lt);
+
+    rim.color.copy(lightColor);
+    underMat.emissiveIntensity = glow;
+    board.position.z = boardZ;
+    board.scale.setScalar(boardScale);
+
+    if(!reduceMotion){
+      parX += (mouseX - parX) * 0.05;
+      parY += (mouseY - parY) * 0.05;
+      camera.position.x += parX * 0.25;
+      camera.position.y += parY * 0.12;
+
+      board.position.y = boardBaseY + Math.sin(t*0.8) * 0.045;
+      board.rotation.y = t * 0.18;
+    }
+    board.rotation.x = rotX;
+    board.rotation.z = rotZ + extraSpin;
+
+    if(Math.abs(spinVelocity) > 0.001){
+      extraSpin += spinVelocity * dt;
+      spinVelocity *= Math.pow(0.001, dt);
+    } else {
+      spinVelocity = 0;
+    }
+
+    camera.lookAt(lookAtTarget);
+
+    particles.rotation.y = t * 0.01;
+    particleMat.color.copy(lightColor);
+
+    const pct = Math.round(smoothFrac*100);
+    hudPct.textContent = String(pct).padStart(3,'0') + '%';
+    hudFrame.textContent = 'CH ' + String(Math.min(idx0+1,5)).padStart(2,'0') + ' / 05';
+    hudBar.style.width = pct + '%';
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+} else {
+  // WebGL unavailable — hide the 3D chrome, page still fully works as scroll-reveal content.
+  canvas.style.display = 'none';
+  scrim.style.display = 'none';
+  hotspot.style.display = 'none';
+}
+</script>
+
+</body>
+</html>

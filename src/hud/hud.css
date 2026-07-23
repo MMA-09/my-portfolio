@@ -1,0 +1,115 @@
+.hud {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  font-family: var(--mono);
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.hud.show {
+  opacity: 1;
+}
+
+.hud-corner {
+  position: fixed;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--concrete-dim);
+}
+
+.hud-tl {
+  top: 22px;
+  left: 24px;
+}
+.hud-tl .dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--grip);
+  margin-right: 8px;
+  box-shadow: 0 0 8px var(--grip);
+}
+
+.hud-tr {
+  top: 22px;
+  right: 24px;
+  text-align: right;
+}
+.hud-tr .frame-num {
+  font-size: 14px;
+  color: var(--concrete);
+  font-weight: 600;
+}
+
+.hud-bl {
+  bottom: 26px;
+  left: 24px;
+  transition: opacity 0.6s ease;
+}
+
+.hud-br {
+  bottom: 26px;
+  right: 24px;
+  text-align: right;
+}
+.hud-br .chapter-name {
+  color: var(--concrete);
+  font-size: 12px;
+}
+
+.hud-progress {
+  position: fixed;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  align-items: flex-end;
+}
+.hud-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-progress-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--concrete-dim);
+  opacity: 0;
+  transform: translateX(4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+}
+.hud-progress-item.active .hud-progress-label {
+  opacity: 0.85;
+  transform: translateX(0);
+  color: var(--concrete);
+}
+.hud-progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line);
+  transition: background 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease;
+}
+.hud-progress-item.done .hud-progress-dot {
+  background: var(--concrete-dim);
+}
+.hud-progress-item.active .hud-progress-dot {
+  background: var(--grip);
+  transform: scale(1.7);
+  box-shadow: 0 0 10px var(--grip);
+}
+
+@media (max-width: 760px) {
+  .hud-progress-label {
+    display: none;
+  }
+  .hud-tl,
+  .hud-tr {
+    font-size: 10px;
+  }
+}

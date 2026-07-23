@@ -1,0 +1,236 @@
+.scene-panel {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+
+.pos-bottom-center {
+  left: 50%;
+  bottom: 9vh;
+  transform: translateX(-50%);
+  text-align: center;
+  max-width: 640px;
+  width: 90vw;
+}
+.pos-left-center {
+  left: 7%;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: left;
+  max-width: 380px;
+  width: 42vw;
+}
+.pos-right-center {
+  right: 7%;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: left;
+  max-width: 380px;
+  width: 42vw;
+}
+.pos-left-bottom {
+  left: 7%;
+  bottom: 14vh;
+  text-align: left;
+  max-width: 360px;
+  width: 40vw;
+}
+.pos-right-bottom {
+  right: 7%;
+  bottom: 14vh;
+  text-align: left;
+  max-width: 360px;
+  width: 40vw;
+}
+.pos-top-center {
+  left: 50%;
+  top: 15vh;
+  transform: translateX(-50%);
+  text-align: center;
+  max-width: 560px;
+  width: 90vw;
+}
+.pos-center {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  max-width: 480px;
+  width: 90vw;
+}
+
+.scene-mono {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--grip);
+  margin-bottom: 16px;
+}
+
+.scene-headline {
+  font-size: clamp(30px, 5.2vw, 58px);
+  line-height: 1.04;
+  overflow: hidden;
+}
+.scene-headline-line {
+  display: block;
+}
+
+.scene-body {
+  color: var(--concrete-dim);
+  font-size: 15.5px;
+  line-height: 1.65;
+  margin-top: 20px;
+}
+.pos-center .scene-body,
+.pos-bottom-center .scene-body,
+.pos-top-center .scene-body {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.scene-blocks {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.scene-block-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--teal);
+}
+.scene-block-title {
+  font-size: 13.5px;
+  color: var(--concrete);
+  margin-top: 3px;
+}
+
+.scene-cue {
+  margin-top: 40px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--concrete-dim);
+  letter-spacing: 0.1em;
+}
+
+.scene-links {
+  margin-top: 30px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  pointer-events: auto;
+}
+.scene-links a {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 10px 18px;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.scene-links a:hover {
+  border-color: var(--grip);
+  color: var(--grip);
+}
+
+/* project chapters */
+.project-frame {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--concrete-dim);
+  margin-bottom: 10px;
+}
+.project-number {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--grip);
+  margin-bottom: 8px;
+}
+.project-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(30px, 5vw, 50px);
+  letter-spacing: -0.02em;
+}
+.project-desc {
+  color: var(--concrete-dim);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-top: 16px;
+}
+.project-meta {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--concrete-dim);
+  letter-spacing: 0.04em;
+}
+.project-meta b {
+  color: var(--concrete);
+  font-weight: 500;
+}
+.project-view {
+  display: inline-block;
+  margin-top: 18px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--grip);
+  pointer-events: auto;
+}
+
+.status-rows {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.status-row {
+  display: flex;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.status-row .label {
+  color: var(--concrete-dim);
+  min-width: 70px;
+  text-align: right;
+}
+.status-row .value {
+  color: var(--concrete);
+}
+
+@media (max-width: 900px) {
+  .pos-left-center,
+  .pos-right-center {
+    left: 50%;
+    right: auto;
+    top: 40%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    max-width: 88vw;
+  }
+  .pos-left-bottom,
+  .pos-right-bottom {
+    left: 50%;
+    right: auto;
+    bottom: 12vh;
+    transform: translateX(-50%);
+    text-align: center;
+    max-width: 88vw;
+  }
+  .scene-headline {
+    font-size: clamp(26px, 8vw, 40px);
+  }
+}
