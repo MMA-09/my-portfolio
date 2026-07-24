@@ -18,7 +18,7 @@ function Panel({ span, position, children, rise = 26 }) {
       className={`scene-panel ${position}`}
       style={{
         opacity: visibility,
-        transform: `${position.includes('center') && !position.includes('bottom') ? 'translate(-50%,-50%)' : position.includes('center') ? 'translateX(-50%)' : 'none'} translateY(${(1 - visibility) * rise}px)`,
+        '--rise': `${(1 - visibility) * rise}px`,
         filter: `blur(${(1 - visibility) * 6}px)`,
       }}
     >
@@ -97,9 +97,11 @@ export default function ChapterOverlays() {
               <b>STATUS</b> — {p.status}
             </div>
           </div>
-          <a className="project-view" href="#">
-            VIEW PROJECT →
-          </a>
+          {p.url && (
+            <a className="project-view" href={p.url} target="_blank" rel="noreferrer">
+              VIEW PROJECT →
+            </a>
+          )}
         </Panel>
       ))}
 
@@ -111,10 +113,31 @@ export default function ChapterOverlays() {
         <p className="scene-body">{TOOLKIT.body}</p>
       </Panel>
 
-      <Panel span={[8, 8]} position="pos-top-center">
+      <Panel span={[8, 8]} position="pos-top-center" rise={18}>
         <div className="scene-mono">{JOURNEY.mono}</div>
         <Headline lines={JOURNEY.headline} />
         <p className="scene-body">{JOURNEY.body}</p>
+        <div className="scene-blocks scene-blocks-inline">
+          {JOURNEY.blocks.map((b) => (
+            <div key={b.tag}>
+              <div className="scene-block-tag" style={{ color: 'var(--lane)' }}>
+                {b.tag}
+              </div>
+              <div className="scene-block-title">{b.title}</div>
+            </div>
+          ))}
+        </div>
+        <div className="scene-mono" style={{ marginTop: 28, color: 'var(--teal)' }}>
+          // HONORS
+        </div>
+        <div className="honor-grid">
+          {JOURNEY.honors.map((h, i) => (
+            <div className="honor" key={h}>
+              <div className="honor-n">{String(i + 1).padStart(2, '0')}</div>
+              <div className="honor-t">{h}</div>
+            </div>
+          ))}
+        </div>
       </Panel>
 
       <Panel span={[9, 9]} position="pos-center">
@@ -139,7 +162,7 @@ export default function ChapterOverlays() {
         <p className="scene-body">{FINAL.body}</p>
         <div className="scene-links">
           {FINAL.links.map((l) => (
-            <a key={l.label} href={l.href}>
+            <a key={l.label} href={l.href} {...(l.href.startsWith('http') ? { target: '_blank', rel: 'noreferrer' } : {})}>
               {l.label}
             </a>
           ))}

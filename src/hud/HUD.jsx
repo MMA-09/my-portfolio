@@ -22,7 +22,7 @@ export default function HUD({ ready }) {
     <div className={`hud ${show ? 'show' : ''}`}>
       <div className="hud-corner hud-tl">
         <span className="dot" />
-        Y.N. · BUILDER
+        M.A. · BUILDER
       </div>
 
       <div className="hud-corner hud-tr">

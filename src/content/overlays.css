@@ -3,12 +3,13 @@
   z-index: 20;
   pointer-events: none;
   will-change: transform, opacity, filter;
+  --rise: 0px;
 }
 
 .pos-bottom-center {
   left: 50%;
   bottom: 9vh;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(var(--rise));
   text-align: center;
   max-width: 640px;
   width: 90vw;
@@ -16,7 +17,7 @@
 .pos-left-center {
   left: 7%;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) translateY(var(--rise));
   text-align: left;
   max-width: 380px;
   width: 42vw;
@@ -24,7 +25,7 @@
 .pos-right-center {
   right: 7%;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) translateY(var(--rise));
   text-align: left;
   max-width: 380px;
   width: 42vw;
@@ -32,6 +33,7 @@
 .pos-left-bottom {
   left: 7%;
   bottom: 14vh;
+  transform: translateY(var(--rise));
   text-align: left;
   max-width: 360px;
   width: 40vw;
@@ -39,6 +41,7 @@
 .pos-right-bottom {
   right: 7%;
   bottom: 14vh;
+  transform: translateY(var(--rise));
   text-align: left;
   max-width: 360px;
   width: 40vw;
@@ -46,7 +49,7 @@
 .pos-top-center {
   left: 50%;
   top: 15vh;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(var(--rise));
   text-align: center;
   max-width: 560px;
   width: 90vw;
@@ -54,7 +57,7 @@
 .pos-center {
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) translateY(var(--rise));
   text-align: center;
   max-width: 480px;
   width: 90vw;
@@ -107,6 +110,45 @@
   font-size: 13.5px;
   color: var(--concrete);
   margin-top: 3px;
+}
+
+.scene-blocks-inline {
+  gap: 8px;
+}
+.scene-blocks-inline .scene-block-title {
+  font-size: 12.5px;
+  color: var(--concrete-dim);
+}
+
+.honor-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  text-align: left;
+  pointer-events: auto;
+}
+.honor {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.honor-n {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--lane);
+}
+.honor-t {
+  font-size: 12.5px;
+  color: var(--concrete);
+  margin-top: 4px;
+  line-height: 1.35;
+}
+@media (max-width: 900px) {
+  .honor-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .scene-cue {
@@ -217,7 +259,7 @@
     left: 50%;
     right: auto;
     top: 40%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) translateY(var(--rise));
     text-align: center;
     max-width: 88vw;
   }
@@ -226,7 +268,7 @@
     left: 50%;
     right: auto;
     bottom: 12vh;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(var(--rise));
     text-align: center;
     max-width: 88vw;
   }
