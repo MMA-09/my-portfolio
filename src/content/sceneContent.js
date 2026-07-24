@@ -18,7 +18,7 @@ export const LEARNING = {
   headline: ['I DON’T WAIT', 'TO BE TAUGHT.'],
   body: "The curriculum is the floor, not the ceiling. Structured classes give me the vocabulary — everything past that, I go get myself.",
   blocks: [
-    { tag: '[HL × 3]', title: 'MATHEMATICS AA · PHYSICS · COMPUTER SCIENCE' },
+    { tag: '[HL × 4]', title: 'MATHEMATICS AA · PHYSICS · COMPUTER SCIENCE · BUSINESS' },
     { tag: '[SELF-TAUGHT]', title: 'edX / UC SANTA CRUZ COURSES · BOOKS' },
     { tag: '[FIRST MODEL]', title: 'G9 · PYTHON + MATPLOTLIB GLIDER REGRESSION' },
   ],
